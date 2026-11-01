@@ -1,0 +1,91 @@
+<!doctype html>
+<html lang="sv">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Spanska – övningar</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Atkinson+Hyperlegible:wght@400;700&family=Bricolage+Grotesque:opsz,wght@12..96,800&display=swap">
+<style>
+/* Layout: one narrow column, a list of weeks. Same colours as the slides. */
+:root {
+  --bg: #eef2f6;
+  --surface: #ffffff;
+  --fg: #18202c;
+  --muted: #566173;
+  --line: #d3dae4;
+  --red: #c8102e;
+  --yellow: #f2c200;
+  --focus: #1f5fbf;
+  --font-display: "Bricolage Grotesque", "Segoe UI", system-ui, sans-serif;
+  --font-body: "Atkinson Hyperlegible", "Segoe UI", system-ui, sans-serif;
+  color-scheme: light;
+}
+@media (prefers-color-scheme: dark) {
+  :root {
+    --bg: #11151c; --surface: #1a2029; --fg: #eef1f5; --muted: #a2acbb; --line: #2d3542;
+    --red: #d9334a; --yellow: #f5c518; --focus: #8ab4ff;
+    color-scheme: dark;
+  }
+}
+*, *::before, *::after { box-sizing: border-box; }
+body {
+  margin: 0;
+  background: var(--bg);
+  color: var(--fg);
+  font-family: var(--font-body);
+  font-size: 18px;
+  line-height: 1.5;
+}
+main {
+  max-width: 640px;
+  margin: 0 auto;
+  padding-block: 48px;
+  padding-left: max(16px, env(safe-area-inset-left, 0px));
+  padding-right: max(16px, env(safe-area-inset-right, 0px));
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+}
+.flag { display: flex; width: 56px; height: 10px; border-radius: 3px; overflow: hidden; }
+.flag span:nth-child(1), .flag span:nth-child(3) { flex: 1; background: var(--red); }
+.flag span:nth-child(2) { flex: 2; background: var(--yellow); }
+h1 { margin: 0; font-family: var(--font-display); font-weight: 800; font-size: clamp(1.8rem, 6vw, 2.6rem); line-height: 1.1; }
+p { margin: 0; color: var(--muted); }
+.weeks { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 12px; }
+.week {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding: 16px 18px;
+  background: var(--surface);
+  border: 2px solid var(--line);
+  border-radius: 12px;
+  color: var(--fg);
+  text-decoration: none;
+}
+.week:hover { border-color: var(--fg); }
+.week:focus-visible { outline: 3px solid var(--focus); outline-offset: 2px; }
+.week .when { font-size: .8rem; font-weight: 700; letter-spacing: .08em; text-transform: uppercase; color: var(--muted); }
+.week .what { font-family: var(--font-display); font-weight: 800; font-size: 1.3rem; }
+.week .why { color: var(--muted); font-size: .95rem; }
+</style>
+</head>
+<body>
+<main>
+  <div class="flag" aria-hidden="true"><span></span><span></span><span></span></div>
+  <h1>Spanska – övningar</h1>
+  <p>Välj en vecka. Varje övning går igenom ett moment steg för steg.</p>
+  <ul class="weeks">
+    <li>
+      <a class="week" href="v45-pagaende-form/">
+        <span class="when">Vecka 45 · Läxförhör onsdag 4 november</span>
+        <span class="what">Pågående form</span>
+        <span class="why">Böja ESTAR och välja rätt ändelse: -ando eller -iendo</span>
+      </a>
+    </li>
+  </ul>
+</main>
+</body>
+</html>

@@ -1,0 +1,605 @@
+<!doctype html>
+<html lang="sv">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<style>
+:root { color-scheme: light; padding-top: env(safe-area-inset-top, 0px); padding-bottom: env(safe-area-inset-bottom, 0px); }
+body { margin: 0; }
+img { max-width: 100%; }
+[hidden] { display: none !important; }
+</style>
+<title>Pågående form</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Atkinson+Hyperlegible:wght@400;700&family=Bricolage+Grotesque:opsz,wght@12..96,700;12..96,800&display=swap">
+<style>
+/* Layout: one-screen slide stage, content centred in one narrow column, nav bar at the foot. Red = VEM (ESTAR, del 1), yellow = VAD (verbet med ändelse, del 2). */
+:root {
+  --bg: #eef2f6;
+  --surface: #ffffff;
+  --fg: #18202c;
+  --muted: #566173;
+  --line: #d3dae4;
+  --red: #c8102e;
+  --red-ink: #ffffff;
+  --yellow: #f2c200;
+  --yellow-ink: #2a2000;
+  --focus: #1f5fbf;
+  --ok: #1d6b3a;
+  --ok-bg: #dcf1e3;
+  --bad: #9b1c1c;
+  --bad-bg: #f8dede;
+  --font-display: "Bricolage Grotesque", "Segoe UI", system-ui, sans-serif;
+  --font-body: "Atkinson Hyperlegible", "Segoe UI", system-ui, sans-serif;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #11151c; --surface: #1a2029; --fg: #eef1f5; --muted: #a2acbb; --line: #2d3542;
+    --red: #d9334a; --red-ink: #ffffff; --yellow: #f5c518; --yellow-ink: #231a00; --focus: #8ab4ff;
+    --ok: #7fd59b; --ok-bg: #16301f; --bad: #ff9b9b; --bad-bg: #3a1a1a;
+    color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #11151c; --surface: #1a2029; --fg: #eef1f5; --muted: #a2acbb; --line: #2d3542;
+  --red: #d9334a; --red-ink: #ffffff; --yellow: #f5c518; --yellow-ink: #231a00; --focus: #8ab4ff;
+    --ok: #7fd59b; --ok-bg: #16301f; --bad: #ff9b9b; --bad-bg: #3a1a1a;
+  color-scheme: dark;
+}
+
+*, *::before, *::after { box-sizing: border-box; }
+html, body { height: 100%; }
+body {
+  background: var(--bg);
+  color: var(--fg);
+  font-family: var(--font-body);
+  font-size: 18px;
+  line-height: 1.5;
+}
+.app {
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  padding-left: max(16px, env(safe-area-inset-left, 0px));
+  padding-right: max(16px, env(safe-area-inset-right, 0px));
+}
+.stage { flex: 1; min-height: 0; overflow-y: auto; display: flex; padding-block: 24px; }
+.slide {
+  margin: auto;
+  width: 100%;
+  max-width: 720px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 20px;
+  text-align: center;
+  animation: slide-in .3s ease;
+}
+@keyframes slide-in { from { opacity: .4; transform: translateY(8px); } to { opacity: 1; transform: none; } }
+
+.eyebrow {
+  font-size: .8rem;
+  font-weight: 700;
+  letter-spacing: .09em;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+h1, h2 {
+  margin: 0;
+  font-family: var(--font-display);
+  font-weight: 800;
+  font-size: clamp(1.6rem, 4.6vw, 2.4rem);
+  line-height: 1.15;
+  text-wrap: balance;
+}
+.gloss { color: var(--muted); font-size: 1rem; }
+.note {
+  margin: 0;
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  padding: 12px 18px;
+  max-width: 34rem;
+}
+
+/* Slide 0: what it means */
+.timeline { width: 100%; max-width: 480px; display: flex; align-items: center; gap: 10px; }
+.tl-line { flex: 1; height: 2px; background: var(--line); }
+.tl-pt { color: var(--muted); font-weight: 700; font-size: .95rem; }
+.tl-now { background: var(--fg); color: var(--bg); font-weight: 700; padding: 6px 14px; border-radius: 999px; }
+.compare { width: 100%; max-width: 600px; display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; }
+@media (max-width: 520px) { .compare { grid-template-columns: 1fr; } }
+.case {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding: 14px 16px;
+  text-align: left;
+  background: var(--surface);
+  border: 2px solid var(--line);
+  border-radius: 12px;
+}
+.case.yes { border-color: var(--fg); }
+.case .label { font-size: .8rem; font-weight: 700; letter-spacing: .06em; text-transform: uppercase; color: var(--muted); }
+.case.yes .label { color: var(--fg); }
+.case .sent { font-size: 1.15rem; line-height: 1.3; }
+.case span:last-child { color: var(--muted); font-size: .95rem; }
+
+/* Slide 1 */
+.sv-big { margin: 0; font-size: clamp(1.3rem, 4vw, 1.8rem); font-weight: 700; }
+.arrow { color: var(--muted); font-size: 1.6rem; line-height: 1; }
+.words {
+  width: 100%;
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 15rem));
+  justify-content: center;
+  gap: 16px;
+}
+.word { min-width: 0; display: flex; flex-direction: column; align-items: center; gap: 6px; }
+.chip {
+  max-width: 100%;
+  font-family: var(--font-display);
+  font-weight: 800;
+  font-size: clamp(1.5rem, 6vw, 2.3rem);
+  line-height: 1.1;
+  padding: .18em .5em;
+  border-radius: 12px;
+}
+.chip.red { background: var(--red); color: var(--red-ink); }
+.chip.yellow { background: var(--yellow); color: var(--yellow-ink); }
+.goal {
+  margin-top: 6px;
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding: 10px 12px;
+  border: 2px solid;
+  border-radius: 10px;
+  background: var(--surface);
+}
+.goal.red { border-color: var(--red); }
+.goal.yellow { border-color: var(--yellow); }
+.goal b { font-size: 1rem; line-height: 1.25; }
+.goal span { font-size: .9rem; line-height: 1.35; color: var(--muted); }
+
+/* Slide: vem-ord ↔ ESTAR */
+.lead { margin: 0; color: var(--muted); max-width: 40ch; }
+.match { width: 100%; max-width: 560px; display: flex; flex-direction: column; gap: 6px; }
+.mrow {
+  display: grid;
+  grid-template-columns: minmax(0, 1.3fr) minmax(0, 1.3fr) 24px minmax(0, 1fr);
+  align-items: center;
+  gap: 8px;
+  padding: 10px 14px;
+  text-align: left;
+}
+.mhead { padding-block: 0; font-size: .78rem; font-weight: 700; letter-spacing: .06em; text-transform: uppercase; color: var(--muted); }
+button.mrow {
+  font: inherit;
+  color: var(--fg);
+  background: var(--surface);
+  border: 2px solid var(--line);
+  border-radius: 10px;
+  cursor: pointer;
+}
+button.mrow:hover { border-color: var(--muted); }
+button.mrow[aria-pressed="true"] { border-color: var(--red); box-shadow: inset 0 0 0 1px var(--red); }
+.mrow .who-es { font-weight: 700; }
+.mrow .arr { color: var(--muted); text-align: center; }
+.mrow .estar { font-family: var(--font-display); font-weight: 800; font-size: 1.15rem; color: var(--red); }
+
+.exam {
+  width: 100%;
+  max-width: 560px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  padding: 14px 16px;
+  border: 2px dashed var(--line);
+  border-radius: 12px;
+}
+.exam .q { font-size: 1.3rem; font-weight: 700; }
+.exam .blank { display: inline-block; width: 5.5em; margin-left: 10px; border-bottom: 3px solid var(--fg); vertical-align: -2px; }
+.exam .a { color: var(--muted); }
+.exam .a b { display: inline-block; color: var(--red); font-family: var(--font-display); font-weight: 800; font-size: 1.15rem; }
+
+.rulebox { max-width: 560px; width: 100%; text-align: left; }
+.checks { list-style: none; margin: 8px 0 0; padding: 0; display: flex; flex-direction: column; gap: 6px; }
+.checks li { display: flex; align-items: baseline; gap: 10px; }
+.ok, .bad {
+  flex: none;
+  min-width: 3.4em;
+  padding: 1px 8px;
+  border-radius: 999px;
+  font-size: .78rem;
+  font-weight: 700;
+  text-align: center;
+}
+.ok { background: var(--ok-bg); color: var(--ok); }
+.bad { background: var(--bad-bg); color: var(--bad); }
+.hint { color: var(--muted); font-size: .9rem; margin-top: -4px; }
+
+/* Slide 2: puzzle pieces */
+.pieces { display: flex; justify-content: center; max-width: 100%; }
+.col { display: flex; flex-direction: column; align-items: center; gap: 8px; min-width: 0; }
+.tag { font-size: .8rem; font-weight: 700; letter-spacing: .09em; color: var(--muted); }
+.piece {
+  position: relative;
+  font-family: var(--font-display);
+  font-weight: 800;
+  font-size: clamp(1.3rem, 5.4vw, 2.3rem);
+  line-height: 1;
+  padding: .55em .6em;
+  text-align: center;
+  white-space: nowrap;
+}
+.piece.vem {
+  min-width: 5.6em;
+  background: var(--red);
+  color: var(--red-ink);
+  border-radius: 14px 0 0 14px;
+  z-index: 2;
+}
+.piece.vem::after {
+  content: "";
+  position: absolute;
+  right: -14px;
+  top: 50%;
+  width: 28px;
+  height: 28px;
+  margin-top: -14px;
+  border-radius: 50%;
+  background: var(--red);
+}
+.piece.vad {
+  min-width: 6.4em;
+  background: var(--yellow);
+  color: var(--yellow-ink);
+  border-radius: 0 14px 14px 0;
+  padding-left: 1em;
+  -webkit-mask: radial-gradient(circle at 0 50%, transparent 14px, #000 14.5px);
+  mask: radial-gradient(circle at 0 50%, transparent 14px, #000 14.5px);
+}
+.piece .end { text-decoration: underline; text-decoration-thickness: 3px; text-underline-offset: 5px; }
+.pop { animation: pop .35s ease; }
+@keyframes pop { 0% { transform: scale(.88); } 60% { transform: scale(1.05); } 100% { transform: scale(1); } }
+
+.rule { margin: 0; color: var(--muted); }
+.rule b { color: var(--fg); }
+
+.result { display: flex; flex-direction: column; gap: 2px; }
+.result .es { font-family: var(--font-display); font-weight: 800; font-size: clamp(1.3rem, 4.5vw, 1.7rem); }
+.result .sv { color: var(--muted); }
+
+.pickers { width: 100%; display: flex; flex-direction: column; gap: 16px; }
+.picker { display: flex; flex-direction: column; align-items: center; gap: 8px; }
+.pick-label { font-weight: 700; display: inline-flex; align-items: center; gap: 8px; }
+.swatch { width: 14px; height: 14px; border-radius: 4px; }
+.swatch.red { background: var(--red); }
+.swatch.yellow { background: var(--yellow); }
+.options {
+  width: 100%;
+  max-width: 520px;
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 10px;
+}
+@media (min-width: 720px) { .options { max-width: none; grid-template-columns: repeat(6, minmax(0, 1fr)); } }
+.opt {
+  font: inherit;
+  background: var(--surface);
+  color: var(--fg);
+  border: 2px solid var(--line);
+  border-radius: 12px;
+  padding: 8px 6px;
+  min-height: 56px;
+  cursor: pointer;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 1px;
+}
+.opt b { font-size: 1.05rem; line-height: 1.2; }
+.opt small { color: var(--muted); font-size: .85rem; line-height: 1.2; }
+.opt:hover { border-color: var(--muted); }
+.opt.who[aria-pressed="true"] { border-color: var(--red); box-shadow: inset 0 0 0 1px var(--red); }
+.opt.what[aria-pressed="true"] { border-color: var(--yellow); box-shadow: inset 0 0 0 1px var(--yellow); }
+
+/* Nav */
+.nav {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding-block: 12px;
+  border-top: 1px solid var(--line);
+}
+.navbtn {
+  font: inherit;
+  font-weight: 700;
+  padding: 10px 18px;
+  min-height: 44px;
+  border-radius: 999px;
+  border: 2px solid var(--fg);
+  background: transparent;
+  color: var(--fg);
+  cursor: pointer;
+}
+.navbtn.primary { background: var(--fg); color: var(--bg); }
+.navbtn:disabled { opacity: .35; cursor: default; }
+.dots { display: flex; gap: 8px; }
+.dot { width: 10px; height: 10px; border-radius: 50%; background: var(--line); }
+.dot.on { background: var(--fg); }
+.sr { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
+
+button:focus-visible { outline: 3px solid var(--focus); outline-offset: 2px; }
+
+@media (prefers-reduced-motion: reduce) {
+  .slide, .pop { animation: none; }
+}
+</style>
+</head>
+<body>
+<div class="app">
+  <main class="stage" id="stage">
+
+    <section class="slide" aria-labelledby="s0-title">
+      <div class="eyebrow">Först: vad betyder det?</div>
+      <h1 id="s0-title">Pågående form = något som händer just nu</h1>
+
+      <div class="timeline" aria-hidden="true">
+        <span class="tl-pt">igår</span>
+        <span class="tl-line"></span>
+        <span class="tl-now">JUST NU</span>
+        <span class="tl-line"></span>
+        <span class="tl-pt">i morgon</span>
+      </div>
+
+      <div class="compare">
+        <div class="case yes">
+          <span class="label">Pågående form</span>
+          <b class="sent">Jag håller på att spela fotboll.</b>
+          <span>Det händer nu, i den här stunden.</span>
+        </div>
+        <div class="case">
+          <span class="label">Inte pågående form</span>
+          <b class="sent">Jag spelar fotboll varje tisdag.</b>
+          <span>Det är något jag brukar göra.</span>
+        </div>
+      </div>
+
+      <p class="note">På svenska säger vi ofta <b>håller på att</b>. Spanskan har en egen form för det, och den ska du lära dig nu.</p>
+    </section>
+
+    <section class="slide" aria-labelledby="s1-title" hidden>
+      <div class="eyebrow">Läxförhör onsdag 4 november</div>
+      <h1 id="s1-title">Det här vill läraren att du kan</h1>
+      <p class="sv-big">Jag håller på att äta.</p>
+      <div class="arrow" aria-hidden="true">↓</div>
+      <div class="words">
+        <div class="word">
+          <span class="chip red">Estoy</span>
+          <span class="gloss">jag är</span>
+          <div class="goal red"><b>Del 1: Böja ESTAR</b><span>Ändra ordet efter vem det handlar om</span></div>
+        </div>
+        <div class="word">
+          <span class="chip yellow">comiendo</span>
+          <span class="gloss">ätande</span>
+          <div class="goal yellow"><b>Del 2: Välja rätt ändelse</b><span>-ando på AR-verb, -iendo på ER- och IR-verb</span></div>
+        </div>
+      </div>
+      <p class="note">Ändelse = slutet på ordet. Ordagrant blir meningen <i>jag är ätande</i>.</p>
+    </section>
+
+    <section class="slide" aria-labelledby="sm-title" hidden>
+      <div class="eyebrow">Del 1: Böja ESTAR</div>
+      <h2 id="sm-title">Vem-ordet och ESTAR hör ihop</h2>
+      <p class="lead">Vem-ordet säger vem det handlar om. ESTAR byter form efter det ordet. Tryck på en rad.</p>
+
+      <div class="match" role="group" aria-label="Vem-ord och ESTAR">
+        <div class="mrow mhead" aria-hidden="true"><span>Svenska</span><span>Vem-ordet</span><span></span><span>ESTAR</span></div>
+        <button class="mrow" id="m-yo" data-who="yo" data-estar="estoy" data-sv="jag är" aria-pressed="false"><span>jag är</span><span class="who-es">yo</span><span class="arr" aria-hidden="true">→</span><span class="estar">estoy</span></button>
+        <button class="mrow" id="m-tu" data-who="tú" data-estar="estás" data-sv="du är" aria-pressed="false"><span>du är</span><span class="who-es">tú</span><span class="arr" aria-hidden="true">→</span><span class="estar">estás</span></button>
+        <button class="mrow" id="m-el" data-who="él / ella" data-estar="está" data-sv="han / hon är" aria-pressed="false"><span>han / hon är</span><span class="who-es">él / ella</span><span class="arr" aria-hidden="true">→</span><span class="estar">está</span></button>
+        <button class="mrow" id="m-nosotros" data-who="nosotros" data-estar="estamos" data-sv="vi är" aria-pressed="true"><span>vi är</span><span class="who-es">nosotros</span><span class="arr" aria-hidden="true">→</span><span class="estar">estamos</span></button>
+        <button class="mrow" id="m-vosotros" data-who="vosotros" data-estar="estáis" data-sv="ni är" aria-pressed="false"><span>ni är</span><span class="who-es">vosotros</span><span class="arr" aria-hidden="true">→</span><span class="estar">estáis</span></button>
+        <button class="mrow" id="m-ellos" data-who="ellos / ellas" data-estar="están" data-sv="de är" aria-pressed="false"><span>de är</span><span class="who-es">ellos / ellas</span><span class="arr" aria-hidden="true">→</span><span class="estar">están</span></button>
+      </div>
+
+      <div class="exam" aria-live="polite">
+        <span class="eyebrow">Så kan det se ut på förhöret</span>
+        <div class="q"><span id="examWho">nosotros</span><span class="blank" aria-label="tom rad"></span></div>
+        <div class="a">Du skriver <b id="examEstar">estamos</b> (<span id="examSv">vi är</span>)</div>
+      </div>
+
+      <div class="note rulebox">
+        <b>Vem-ordet får man ta bort. ESTAR måste alltid vara med.</b>
+        <ul class="checks">
+          <li><span class="ok">Rätt</span>Estamos comiendo. (vi håller på att äta)</li>
+          <li><span class="ok">Rätt</span>Nosotros estamos comiendo. (samma sak)</li>
+          <li><span class="bad">Fel</span>Nosotros comiendo. (vi ätande, <i>är</i> saknas)</li>
+        </ul>
+      </div>
+    </section>
+
+    <section class="slide" aria-labelledby="s2-title" hidden>
+      <div class="eyebrow">Pusslet</div>
+      <h2 id="s2-title">Välj vem och vad. Titta på bitarna.</h2>
+
+      <div class="pieces" aria-hidden="true">
+        <div class="col">
+          <span class="tag">VEM?</span>
+          <div class="piece vem" id="vemWord">estoy</div>
+          <span class="gloss" id="vemGloss">jag är</span>
+        </div>
+        <div class="col">
+          <span class="tag">VAD?</span>
+          <div class="piece vad" id="vadWord"><span id="vadStem">com</span><span class="end" id="vadEnd">iendo</span></div>
+          <span class="gloss" id="vadGloss">ätande</span>
+        </div>
+      </div>
+
+      <p class="rule" id="rule"><b>comer</b> (äta) slutar på <b>-er</b> → ändelsen blir <b>-iendo</b></p>
+
+      <div class="result" aria-live="polite">
+        <span class="es" id="resEs">Estoy comiendo.</span>
+        <span class="sv" id="resSv">Jag håller på att äta.</span>
+      </div>
+
+      <div class="pickers">
+        <div class="picker">
+          <span class="pick-label"><span class="swatch red" aria-hidden="true"></span>1. Vem? (del 1)</span>
+          <span class="hint">Det lilla ordet är vem-ordet på spanska</span>
+          <div class="options" role="group" aria-label="Välj vem">
+            <button class="opt who" id="who-jag" data-key="jag" aria-pressed="true"><b>jag</b><small>yo</small></button>
+            <button class="opt who" id="who-du" data-key="du" aria-pressed="false"><b>du</b><small>tú</small></button>
+            <button class="opt who" id="who-han" data-key="han" aria-pressed="false"><b>han / hon</b><small>él / ella</small></button>
+            <button class="opt who" id="who-vi" data-key="vi" aria-pressed="false"><b>vi</b><small>nosotros</small></button>
+            <button class="opt who" id="who-ni" data-key="ni" aria-pressed="false"><b>ni</b><small>vosotros</small></button>
+            <button class="opt who" id="who-de" data-key="de" aria-pressed="false"><b>de</b><small>ellos / ellas</small></button>
+          </div>
+        </div>
+        <div class="picker">
+          <span class="pick-label"><span class="swatch yellow" aria-hidden="true"></span>2. Vad? (del 2)</span>
+          <div class="options" role="group" aria-label="Välj verb">
+            <button class="opt what" id="what-hablar" data-key="hablar" aria-pressed="false"><b>tala</b><small>hablar</small></button>
+            <button class="opt what" id="what-jugar" data-key="jugar" aria-pressed="false"><b>spela</b><small>jugar</small></button>
+            <button class="opt what" id="what-bailar" data-key="bailar" aria-pressed="false"><b>dansa</b><small>bailar</small></button>
+            <button class="opt what" id="what-comer" data-key="comer" aria-pressed="true"><b>äta</b><small>comer</small></button>
+            <button class="opt what" id="what-beber" data-key="beber" aria-pressed="false"><b>dricka</b><small>beber</small></button>
+            <button class="opt what" id="what-escribir" data-key="escribir" aria-pressed="false"><b>skriva</b><small>escribir</small></button>
+          </div>
+        </div>
+      </div>
+
+      <p class="note" id="discovery" hidden>Såg du det? Den <b>röda</b> biten byter form efter <b>vem</b>. Den <b>gula</b> biten får sin ändelse efter hur verbet <b>slutar</b>.</p>
+    </section>
+
+  </main>
+
+  <nav class="nav" aria-label="Bläddra">
+    <button class="navbtn" id="prev">← Tillbaka</button>
+    <div class="dots" id="dots" aria-hidden="true"></div>
+    <span class="sr" id="counter" aria-live="polite"></span>
+    <button class="navbtn primary" id="next">Nästa →</button>
+  </nav>
+</div>
+
+<script>
+(function () {
+  var slides = Array.prototype.slice.call(document.querySelectorAll('.slide'));
+  var stage = document.getElementById('stage');
+  var prev = document.getElementById('prev');
+  var next = document.getElementById('next');
+  var dotsEl = document.getElementById('dots');
+  var counter = document.getElementById('counter');
+  var current = 0;
+
+  slides.forEach(function () {
+    var d = document.createElement('span');
+    d.className = 'dot';
+    dotsEl.appendChild(d);
+  });
+  var dots = dotsEl.children;
+
+  function show(n) {
+    current = Math.max(0, Math.min(slides.length - 1, n));
+    slides.forEach(function (s, k) { s.hidden = k !== current; });
+    for (var k = 0; k < dots.length; k++) dots[k].className = 'dot' + (k === current ? ' on' : '');
+    prev.disabled = current === 0;
+    next.disabled = current === slides.length - 1;
+    counter.textContent = 'Bild ' + (current + 1) + ' av ' + slides.length;
+    stage.scrollTop = 0;
+  }
+  prev.addEventListener('click', function () { show(current - 1); });
+  next.addEventListener('click', function () { show(current + 1); });
+  document.addEventListener('keydown', function (e) {
+    if (e.key === 'ArrowRight') show(current + 1);
+    if (e.key === 'ArrowLeft') show(current - 1);
+  });
+
+  var people = {
+    jag: { es: 'estoy',   gloss: 'jag är',       subj: 'Jag' },
+    du:  { es: 'estás',   gloss: 'du är',        subj: 'Du' },
+    han: { es: 'está',    gloss: 'han / hon är', subj: 'Han / hon' },
+    vi:  { es: 'estamos', gloss: 'vi är',        subj: 'Vi' },
+    ni:  { es: 'estáis',  gloss: 'ni är',        subj: 'Ni' },
+    de:  { es: 'están',   gloss: 'de är',        subj: 'De' }
+  };
+  var verbs = {
+    hablar:   { stem: 'habl',   end: 'ando',  ending: '-ar', sv: 'tala',   part: 'talande' },
+    jugar:    { stem: 'jug',    end: 'ando',  ending: '-ar', sv: 'spela',  part: 'spelande' },
+    bailar:   { stem: 'bail',   end: 'ando',  ending: '-ar', sv: 'dansa',  part: 'dansande' },
+    comer:    { stem: 'com',    end: 'iendo', ending: '-er', sv: 'äta',    part: 'ätande' },
+    beber:    { stem: 'beb',    end: 'iendo', ending: '-er', sv: 'dricka', part: 'drickande' },
+    escribir: { stem: 'escrib', end: 'iendo', ending: '-ir', sv: 'skriva', part: 'skrivande' }
+  };
+
+  var state = { who: 'jag', what: 'comer' };
+  var tried = { who: { jag: true }, what: { comer: true } };
+
+  var el = function (id) { return document.getElementById(id); };
+  var vemWord = el('vemWord'), vemGloss = el('vemGloss');
+  var vadWord = el('vadWord'), vadStem = el('vadStem'), vadEnd = el('vadEnd'), vadGloss = el('vadGloss');
+  var rule = el('rule'), resEs = el('resEs'), resSv = el('resSv'), discovery = el('discovery');
+
+  function pop(node) {
+    node.classList.remove('pop');
+    void node.offsetWidth;
+    node.classList.add('pop');
+  }
+
+  function render(changed) {
+    var p = people[state.who];
+    var v = verbs[state.what];
+    vemWord.textContent = p.es;
+    vemGloss.textContent = p.gloss;
+    vadStem.textContent = v.stem;
+    vadEnd.textContent = v.end;
+    vadGloss.textContent = v.part;
+    rule.innerHTML = '<b>' + state.what + '</b> (' + v.sv + ') slutar på <b>' + v.ending + '</b> → ändelsen blir <b>-' + v.end + '</b>';
+    var esWord = p.es.charAt(0).toUpperCase() + p.es.slice(1);
+    resEs.textContent = esWord + ' ' + v.stem + v.end + '.';
+    resSv.textContent = p.subj + ' håller på att ' + v.sv + '.';
+    if (changed === 'who') pop(vemWord);
+    if (changed === 'what') pop(vadWord);
+    if (Object.keys(tried.who).length >= 2 && Object.keys(tried.what).length >= 2) discovery.hidden = false;
+  }
+
+  function wire(selector, kind) {
+    var buttons = Array.prototype.slice.call(document.querySelectorAll(selector));
+    buttons.forEach(function (btn) {
+      btn.addEventListener('click', function () {
+        var key = btn.getAttribute('data-key');
+        buttons.forEach(function (b) { b.setAttribute('aria-pressed', b === btn ? 'true' : 'false'); });
+        state[kind] = key;
+        tried[kind][key] = true;
+        render(kind);
+      });
+    });
+  }
+  var mrows = Array.prototype.slice.call(document.querySelectorAll('button.mrow'));
+  var examWho = el('examWho'), examEstar = el('examEstar'), examSv = el('examSv');
+  mrows.forEach(function (row) {
+    row.addEventListener('click', function () {
+      mrows.forEach(function (r) { r.setAttribute('aria-pressed', r === row ? 'true' : 'false'); });
+      examWho.textContent = row.getAttribute('data-who');
+      examEstar.textContent = row.getAttribute('data-estar');
+      examSv.textContent = row.getAttribute('data-sv');
+      pop(examEstar);
+    });
+  });
+
+  wire('.opt.who', 'who');
+  wire('.opt.what', 'what');
+
+  render();
+  show(0);
+})();
+</script>
+</body>
+</html>
